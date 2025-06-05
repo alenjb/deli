@@ -1,0 +1,54 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Build output
+/build/
+/out/
+/target/
+
+# Gradle
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
+
+# Gradle logs
+.gradle/
+build/
+
+# Maven
+log/
+target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+*.local
+
+# Spring Boot specific
+# If you store generated files in tmp
+/tmp/
+!src/main/resources/static/**/tmp/
+
+# Optional: if using Lombok
+*.lombok
+
+# Others
+*.swp
+*.swo
+
+# Ignore test reports
+/test-output/
