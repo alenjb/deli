@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 /* 주문 도메인 */
+@Table(name = "orders")
 public class Order {
 
     // 주문 아이디
