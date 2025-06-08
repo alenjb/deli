@@ -1,0 +1,41 @@
+package com.example.delivery.order.domain;
+
+import com.example.delivery.store.domain.Store;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
+/* 주문 도메인 */
+public class Order {
+
+    // 주문 아이디
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // 유저 ID
+    private Long userId;
+
+    // 매장
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Store store;
+
+    // 매장과 목적지까지의 거리
+    private double distanceKm;
+
+    // 주문 시각
+    private LocalDateTime createdAt;
+
+    // 계산된 ETA
+    private LocalDateTime eta;
+
+    // 실제 도착 시간
+    private LocalDateTime deliveredAt;
+}
