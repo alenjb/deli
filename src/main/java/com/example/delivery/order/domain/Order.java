@@ -39,4 +39,12 @@ public class Order {
 
     // 실제 도착 시간
     private LocalDateTime deliveredAt;
+
+    /**
+     * 배달 완료 시간을 설정하는 메서드
+     * @param deliveredAt 배달 완료 시각
+     */
+    public void completeDelivery(LocalDateTime deliveredAt) {
+        this.deliveredAt = deliveredAt;
+    }
 }
