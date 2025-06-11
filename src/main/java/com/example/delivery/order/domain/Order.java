@@ -47,4 +47,15 @@ public class Order {
     public void completeDelivery(LocalDateTime deliveredAt) {
         this.deliveredAt = deliveredAt;
     }
+
+    /**
+     * ETA보다 지연되었는지 판단하는 메서드
+     * 기준은 5분
+     * @return 지연 여부
+     */
+    public boolean isDelayed() {
+        if (this.deliveredAt == null || this.eta == null) return false;
+        return this.deliveredAt.isAfter(this.eta.plusMinutes(5));
+    }
+
 }
