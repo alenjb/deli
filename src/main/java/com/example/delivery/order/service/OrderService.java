@@ -1,6 +1,8 @@
 package com.example.delivery.order.service;
 
+import com.example.delivery.kafka.DeliveryEventProducer;
 import com.example.delivery.order.domain.Order;
+import com.example.delivery.order.dto.DeliveryCompletedEvent;
 import com.example.delivery.order.dto.OrderRequest;
 import com.example.delivery.order.dto.OrderResponse;
 import com.example.delivery.order.repository.OrderRepository;
@@ -19,6 +21,7 @@ public class OrderService {
     public static final double PEAK_TIME_MULTIPLIER = 1.2; // 피크 시간대 가중치
     private final OrderRepository orderRepository;
     private final StoreRepository  storeRepository;
+    private final DeliveryEventProducer producer;
 
 
     /**
@@ -53,8 +56,13 @@ public class OrderService {
         Optional<Order> order = orderRepository.findById(orderId);
         if(order.isEmpty()) throw new RuntimeException("주문을 찾을 수 없습니다.");
 
-        order.get().completeDelivery(deliveredAt);
-        orderRepository.save(order.get());
+        Order o = order.get();
+        o.completeDelivery(deliveredAt);
+        orderRepository.save(o);
+
+        // Kafka 메시지 발행
+        DeliveryCompletedEvent event = new DeliveryCompletedEvent(o.getId(), deliveredAt);
+        producer.send("delivery-status", event);
     }
 
     /**
