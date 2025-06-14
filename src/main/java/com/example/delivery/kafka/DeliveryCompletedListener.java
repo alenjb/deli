@@ -33,18 +33,22 @@ public class DeliveryCompletedListener {
      */
     @KafkaListener(topics = "delivery-status", groupId = "smarteta-group")
     public void listen(DeliveryCompletedEvent event) {
-        log.info("배달 완료 메시지 수신: {}", event);
+        try {
+            log.info("배달 완료 메시지 수신: {}", event);
 
-        Optional<Order> optionalOrder = orderRepository.findById(event.orderId());
-        if (optionalOrder.isEmpty()) {
-            log.warn("주문 ID={} 에 해당하는 주문을 찾을 수 없습니다.", event.orderId());
-            return;
+            Optional<Order> optionalOrder = orderRepository.findById(event.orderId());
+            if (optionalOrder.isEmpty()) {
+                log.warn("주문 ID={} 에 해당하는 주문을 찾을 수 없습니다.", event.orderId());
+                return;
+            }
+
+            Order order = optionalOrder.get();
+            order.completeDelivery(event.deliveredAt());
+            summaryService.processCompletedOrder(order);
+
+            log.info("주문 처리 완료 → 주문 ID: {}", order.getId());
+        }catch (Exception e){
+            log.error(" Kafka 메시지 처리 중 예외 발생", e);
         }
-
-        Order order = optionalOrder.get();
-        order.completeDelivery(event.deliveredAt());
-        summaryService.processCompletedOrder(order);
-
-        log.info("주문 처리 완료 → 주문 ID: {}", order.getId());
     }
 }
