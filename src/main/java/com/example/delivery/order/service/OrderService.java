@@ -45,6 +45,19 @@ public class OrderService {
     }
 
     /**
+     * 배달을 완료하는 메서드
+     * @param orderId 주문 ID
+     * @param deliveredAt 배달 완료 시각
+     */
+    public void completeDelivery(Long orderId, LocalDateTime deliveredAt) {
+        Optional<Order> order = orderRepository.findById(orderId);
+        if(order.isEmpty()) throw new RuntimeException("주문을 찾을 수 없습니다.");
+
+        order.get().completeDelivery(deliveredAt);
+        orderRepository.save(order.get());
+    }
+
+    /**
      * ETA를 계산하는 메서드
      * @param store 매장 정보
      * @param request 주문 요청 DTO
@@ -56,6 +69,7 @@ public class OrderService {
         int totalMinutes = prepTime + request.getEstimatedDeliveryTimeMinutes();
         return now.plusMinutes(totalMinutes);
     }
+
     /**
      *  점싱 혹은 저녁 시간인지 판단하는 메서드
      *  점심 시간: 11 ~ 13시
