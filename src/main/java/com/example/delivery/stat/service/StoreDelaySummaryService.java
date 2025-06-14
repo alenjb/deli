@@ -9,6 +9,7 @@ import com.example.delivery.store.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,19 @@ public class StoreDelaySummaryService {
 
     /**
      * 특정 매장의 지연 통계를 갱신하는 메서드
+     *
+     * 처리 로직:
+     * 1. 매장 ID를 통해 매장 정보를 조회한다.
+     *    - 매장이 존재하지 않으면 예외 발생.
+     * 2. StoreDelaySummary(지연 통계)를 조회하거나 없으면 초기값으로 생성한다.
+     * 3. 마지막 분석 시점 이후에 배달 완료된 주문들을 조회한다.
+     * 4. 조회된 주문들 중에서:
+     *    - 총 주문 수 계산
+     *    - 지연된 주문 수 계산 (ETA보다 5분 이상 늦은 경우)
+     *    - 총 지연 시간 계산 (ETA와 실제 도착 시간의 차이 누적)
+     *    - 가장 마지막 배달 완료 시각을 기록
+     * 5. 계산된 정보를 기반으로 StoreDelaySummary의 통계를 갱신하고 DB에 저장한다.
+     *
      * @param storeId 매장 ID
      */
     public void updateDelayStats(Long storeId) {
@@ -79,4 +93,52 @@ public class StoreDelaySummaryService {
         summary.updateStats(newOrders, newDelayed, newDelayMinutes, lastTime);
         summaryRepository.save(summary);
     }
+
+    /**
+     * 배달 완료된 주문을 기반으로 해당 매장의 지연 통계를 갱신하는 메서드
+     *
+     * 처리 로직:
+     * 1. 주문에서 매장 정보를 추출
+     * 2. 해당 매장의 지연 통계(StoreDelaySummary)를 조회하거나 없으면 새로 생성
+     * 3. 해당 주문이 지연되었는지 판단하고 통계 수치 계산
+     *    - 총 주문 수 +1
+     *    - 지연 주문 수 +1 (지연 시)
+     *    - 총 지연 시간 추가
+     *    - 마지막 분석 시각 갱신
+     * 4. 갱신된 통계를 저장
+     *
+     * @param order 배달 완료된 주문
+     */
+    public void processCompletedOrder(Order order) {
+        Store store = order.getStore();
+        Long storeId = store.getId();
+
+        // StoreDelaySummary를 가져오거나 없으면 초기 값으로 생성
+        Optional<StoreDelaySummary> optionalSummary = summaryRepository.findById(storeId);
+        StoreDelaySummary summary = optionalSummary.orElse(
+                StoreDelaySummary.builder()
+                        .storeId(storeId)
+                        .storeName(store.getName()) // 매장 이름 저장
+                        .totalOrders(0)
+                        .delayedOrders(0)
+                        .totalDelayMinutes(0)
+                        .lastAnalyzedAt(LocalDateTime.MIN) // 초기값으로 설정
+                        .build()
+        );
+
+        // 신규 통계 수치 계산
+        int newOrders = 1;
+        int newDelayed = order.isDelayed() ? 1 : 0;
+        long delayMinutes = order.isDelayed()
+                ? Duration.between(order.getEta(), order.getDeliveredAt()).toMinutes()
+                : 0;
+        LocalDateTime lastTime = order.getDeliveredAt();
+
+        // 통계 정보 갱신
+        summary.updateStats(newOrders, newDelayed, delayMinutes, lastTime);
+
+        // DB 저장
+        summaryRepository.save(summary);
+    }
+
 }
