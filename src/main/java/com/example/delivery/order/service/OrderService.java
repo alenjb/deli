@@ -1,6 +1,7 @@
 package com.example.delivery.order.service;
 
 import com.example.delivery.kafka.DeliveryEventProducer;
+import com.example.delivery.order.domain.DeliveryStatus;
 import com.example.delivery.order.domain.Order;
 import com.example.delivery.order.dto.DeliveryCompletedEvent;
 import com.example.delivery.order.dto.OrderRequest;
@@ -42,9 +43,18 @@ public class OrderService {
                 .distanceKm(request.getDistanceKm())
                 .createdAt(now)
                 .eta(eta)
+                .status(DeliveryStatus.ASSIGNED) // 기본 상태
                 .build();
+
         orderRepository.save(order);
-        return new OrderResponse(order.getId(), eta);
+
+        return new OrderResponse(
+                order.getId(),
+                order.getStatus(),
+                order.getCreatedAt(),
+                order.getDeliveredAt(),
+                order.getStore().getId()
+        );
     }
 
     /**
