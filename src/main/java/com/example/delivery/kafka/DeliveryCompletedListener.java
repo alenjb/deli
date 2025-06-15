@@ -4,6 +4,7 @@ import com.example.delivery.order.domain.Order;
 import com.example.delivery.order.dto.DeliveryCompletedEvent;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.stat.service.StoreDelaySummaryService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -32,6 +33,7 @@ public class DeliveryCompletedListener {
      * 3. StoreDelaySummaryService를 통해 지연 통계를 갱신
      */
     @KafkaListener(topics = "delivery-status", groupId = "smarteta-group")
+    @Transactional
     public void listen(DeliveryCompletedEvent event) {
         try {
             log.info("배달 완료 메시지 수신: {}", event);
