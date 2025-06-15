@@ -100,7 +100,6 @@ public class StoreDelaySummaryService {
 
     /**
      * 배달 완료된 주문을 기반으로 해당 매장의 지연 통계를 갱신하는 메서드
-     *
      * 처리 로직:
      * 1. 주문에서 매장 정보를 추출
      * 2. 해당 매장의 지연 통계(StoreDelaySummary)를 조회하거나 없으면 새로 생성
@@ -147,7 +146,6 @@ public class StoreDelaySummaryService {
 
     /**
      * 지연률 기준으로 매장을 순위화하여 반환하는 메서드
-     *
      * 각 StoreDelaySummary 엔티티를 DTO로 변환하고, 지연률(delayRate)이 높은 순으로 정렬하여 리스트로 반환
      * @return 지연률 기준 정렬된 매장 통계 리스트
      */
