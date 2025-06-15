@@ -60,4 +60,14 @@ public class StoreDelaySummary {
     public double getAvgDelayMinutes() {
         return delayedOrders == 0 ? 0.0 : (double) totalDelayMinutes / delayedOrders;
     }
+
+    /**
+     * 전체 주문 대비 지연 주문 비율(%)을 계산하는 메서드
+     * @return 지연률 (0~100 사이 double 값)
+     */
+    public double calculateDelayRate() {
+        if (totalOrders == 0) return 0.0;
+        return (double) delayedOrders / totalOrders * 100;
+    }
+
 }

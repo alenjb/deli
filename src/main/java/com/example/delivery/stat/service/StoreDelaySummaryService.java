@@ -3,6 +3,7 @@ package com.example.delivery.stat.service;
 import com.example.delivery.order.domain.Order;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.stat.domain.StoreDelaySummary;
+import com.example.delivery.stat.dto.StoreDelaySummaryResponse;
 import com.example.delivery.stat.repository.StoreDelaySummaryRepository;
 import com.example.delivery.store.domain.Store;
 import com.example.delivery.store.repository.StoreRepository;
@@ -11,8 +12,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -141,4 +145,56 @@ public class StoreDelaySummaryService {
         summaryRepository.save(summary);
     }
 
+    /**
+     * 지연률 기준으로 매장을 순위화하여 반환하는 메서드
+     *
+     * 각 StoreDelaySummary 엔티티를 DTO로 변환하고, 지연률(delayRate)이 높은 순으로 정렬하여 리스트로 반환
+     * @return 지연률 기준 정렬된 매장 통계 리스트
+     */
+    public List<StoreDelaySummaryResponse> getStoreRanking() {
+        List<StoreDelaySummary> summaries = summaryRepository.findAll();
+        List<StoreDelaySummaryResponse> responseList = new ArrayList<>();
+
+        for (StoreDelaySummary summary : summaries) {
+            StoreDelaySummaryResponse response = StoreDelaySummaryResponse.builder()
+                    .storeId(summary.getStoreId())
+                    .storeName(summary.getStoreName())
+                    .totalOrders(summary.getTotalOrders())
+                    .delayedOrders(summary.getDelayedOrders())
+                    .totalDelayMinutes(summary.getTotalDelayMinutes())
+                    .delayRate(summary.calculateDelayRate())
+                    .build();
+
+            responseList.add(response);
+        }
+
+        // delayRate 기준으로 내림차순 정렬
+        responseList.sort(new Comparator<StoreDelaySummaryResponse>() {
+            @Override
+            public int compare(StoreDelaySummaryResponse o1, StoreDelaySummaryResponse o2) {
+                return Double.compare(o2.getDelayRate(), o1.getDelayRate());
+            }
+        });
+
+        return responseList;
+    }
+
+    /**
+     * 특정 매장의 지연 통계를 조회하는 메서드
+     * @param storeId 매장 ID
+     * @return 해당 매장의 지연 통계 DTO
+     */
+    public StoreDelaySummaryResponse getStoreSummary(Long storeId) {
+        StoreDelaySummary summary = summaryRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("해당 매장의 통계를 찾을 수 없습니다."));
+
+        return StoreDelaySummaryResponse.builder()
+                .storeId(summary.getStoreId())
+                .storeName(summary.getStoreName())
+                .totalOrders(summary.getTotalOrders())
+                .delayedOrders(summary.getDelayedOrders())
+                .totalDelayMinutes(summary.getTotalDelayMinutes())
+                .delayRate(summary.calculateDelayRate())
+                .build();
+    }
 }
