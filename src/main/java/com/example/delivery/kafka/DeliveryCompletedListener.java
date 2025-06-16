@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
 
 import java.util.Optional;
 
@@ -35,6 +36,10 @@ public class DeliveryCompletedListener {
     @KafkaListener(topics = "delivery-status", groupId = "smarteta-group")
     @Transactional
     public void listen(DeliveryCompletedEvent event) {
+        log.info("📦 Kafka 메시지 수신: orderId={}, deliveredAt={}", event.orderId(), event.deliveredAt());
+        StopWatch stopWatch = new StopWatch("배달 완료 처리 전체 시간");
+        stopWatch.start("전체 처리");
+
         try {
             log.info("배달 완료 메시지 수신: {}", event);
 
@@ -49,8 +54,11 @@ public class DeliveryCompletedListener {
             summaryService.processCompletedOrder(order);
 
             log.info("주문 처리 완료 → 주문 ID: {}", order.getId());
-        }catch (Exception e){
+        } catch (Exception e){
             log.error(" Kafka 메시지 처리 중 예외 발생", e);
+        } finally {
+            stopWatch.stop();
+            log.info("[성능측정] Kafka 이벤트 전체 처리 시간: {}ms", stopWatch.getTotalTimeMillis());
         }
     }
 }
