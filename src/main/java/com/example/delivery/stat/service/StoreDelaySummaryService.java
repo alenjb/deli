@@ -195,4 +195,29 @@ public class StoreDelaySummaryService {
                 .delayRate(summary.calculateDelayRate())
                 .build();
     }
+
+    /**
+     * 주어진 매장의 하루 지연 통계를 누적 반영하는 메서드
+     * - 하루 동안의 완료된 주문 수, 지연된 주문 수, 지연 시간 합 등을 누적 저장
+     *
+     * @param storeId        매장 ID
+     * @param newOrders      하루 동안 완료된 총 주문 수
+     * @param newDelayed     지연된 주문 수
+     * @param newDelayMinutes 지연된 주문들의 총 지연 시간 (분 단위 합)
+     * @param analyzedAt     분석 기준이 되는 마지막 주문 시각
+     */
+    public void update(Long storeId, int newOrders, int newDelayed, long newDelayMinutes, LocalDateTime analyzedAt) {
+        // 기존 통계를 조회
+        StoreDelaySummary summary = summaryRepository.findByStoreId(storeId).orElse(null);
+
+        // 없으면 오류 발생
+        if (summary == null) throw new RuntimeException("통계를 찾을 수 없습니다.");
+
+        // 누적 통계 업데이트
+        summary.updateStats(newOrders, newDelayed, newDelayMinutes, analyzedAt);
+
+        // 저장
+        summaryRepository.save(summary);
+    }
+
 }
