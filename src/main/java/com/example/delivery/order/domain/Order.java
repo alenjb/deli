@@ -34,7 +34,12 @@ public class Order {
     // 주문 시각
     private LocalDateTime createdAt;
 
+    /**
+     * -- SETTER --
+     *  ETA를 업데이트하는 메서드
+     */
     // 계산된 ETA
+    @Setter
     private LocalDateTime eta;
 
     // 실제 도착 시간

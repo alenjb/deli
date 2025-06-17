@@ -1,6 +1,8 @@
 package com.example.delivery.order.service;
 
+import com.example.delivery.eta.dto.EtaUpdatedEvent;
 import com.example.delivery.kafka.DeliveryEventProducer;
+import com.example.delivery.kafka.EtaEventProducer;
 import com.example.delivery.order.domain.DeliveryStatus;
 import com.example.delivery.order.domain.Order;
 import com.example.delivery.order.dto.DeliveryCompletedEvent;
@@ -23,6 +25,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final StoreRepository  storeRepository;
     private final DeliveryEventProducer producer;
+    private final EtaEventProducer etaEventProducer;
 
 
     /**
@@ -100,5 +103,38 @@ public class OrderService {
         return (hour >= 11 && hour <= 13) || (hour >= 18 && hour <= 20);
     }
 
+    /**
+     * 매장의 요청에 따라 ETA를 조정하는 메서드
+     * 매장이 ETA를 몇 분 연장해달라고 요청한 경우 사용
+     * @param orderId 주문 ID
+     * @param additionalMinutes ETA에 추가할 분(minute) 단위 시간
+     */
+    public void adjustEtaByStore(Long orderId, int additionalMinutes) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
 
+        // 기존 ETA에 요청받은 시간만큼 추가
+        order.setEta(order.getEta().plusMinutes(additionalMinutes));
+        orderRepository.save(order);
+
+        // Kafka로 ETA 변경 이벤트 발행
+        etaEventProducer.sendEtaUpdatedEvent(new EtaUpdatedEvent(
+                order.getId(), order.getUserId(), order.getEta()));
+    }
+
+    /**
+     * 조리 완료 시 ETA를 현재 시각을 기준으로 재설정하는 메서드
+     * 평균 배달 시간을 기준으로 ETA를 재조정
+     * @param orderId 주문 ID
+     */
+    public void adjustEtaOnCookingCompleted(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // 현재 시간 기준 ETA 재계산
+        order.setEta(LocalDateTime.now().plusMinutes(20));
+        orderRepository.save(order);
+
+        // Kafka로 ETA 변경 이벤트 발행
+        etaEventProducer.sendEtaUpdatedEvent(new EtaUpdatedEvent(
+                order.getId(), order.getUserId(), order.getEta()));
+    }
 }
