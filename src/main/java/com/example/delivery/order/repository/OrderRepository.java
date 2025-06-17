@@ -17,4 +17,7 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     List<Order> findByStoreAndCreatedAtAfter(Store store, LocalDateTime createdAt);
 
     List<Order> findByStoreIdAndDeliveredAtAfter(Long storeId, LocalDateTime deliveredAtAfter);
+
+    List<Order> findByDeliveredAtBetween(LocalDateTime start, LocalDateTime end);
+
 }
